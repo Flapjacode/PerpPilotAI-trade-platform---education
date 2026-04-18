@@ -139,6 +139,7 @@ export function useAISignals() {
 
   const generateSignals = async () => {
     setLoading(true);
+    setNextUpdate(2 * 60 * 60 * 1000);
     try {
       const response = await fetch(
         `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&sparkline=false&price_change_percentage=24h`
@@ -192,6 +193,14 @@ export function useAISignals() {
     generateSignals();
     const interval = setInterval(generateSignals, 2 * 60 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const countdown = setInterval(() => {
+      setNextUpdate((current) => Math.max(current - 1000, 0));
+    }, 1000);
+
+    return () => clearInterval(countdown);
   }, []);
 
   return { signals, loading, refreshSignals: generateSignals, nextUpdate };

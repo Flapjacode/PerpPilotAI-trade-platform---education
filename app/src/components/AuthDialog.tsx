@@ -15,6 +15,7 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const { login, signup } = useAuth();
 
   // Login form state
@@ -36,7 +37,7 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
     setError('');
     setIsLoading(true);
 
-    const success = await login(loginData);
+    const success = await login({ ...loginData, remember: rememberMe });
     
     if (success) {
       onClose();
@@ -139,6 +140,16 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                   </button>
                 </div>
               </div>
+
+              <label className="inline-flex items-center gap-2 text-sm text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                />
+                Remember me
+              </label>
 
               <Button
                 type="submit"

@@ -18,18 +18,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USERS_KEY = 'cryptoai_users';
 const CURRENT_USER_KEY = 'cryptoai_current_user';
+const SESSION_USER_KEY = 'cryptoai_session_user';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem(CURRENT_USER_KEY);
+    const storedUser = localStorage.getItem(CURRENT_USER_KEY) || sessionStorage.getItem(SESSION_USER_KEY);
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem(CURRENT_USER_KEY);
+        sessionStorage.removeItem(SESSION_USER_KEY);
       }
     }
     setIsLoading(false);
@@ -54,7 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (foundUser && foundUser.password === credentials.password) {
       const { password, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+
+      if (credentials.remember) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+        sessionStorage.removeItem(SESSION_USER_KEY);
+      } else {
+        sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(userWithoutPassword));
+        localStorage.removeItem(CURRENT_USER_KEY);
+      }
+
       setIsLoading(false);
       return true;
     }
@@ -97,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);
   }, []);
 
   const connectSolanaWallet = useCallback((address: string) => {

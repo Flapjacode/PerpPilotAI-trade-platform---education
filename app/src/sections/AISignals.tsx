@@ -11,7 +11,7 @@ interface AISignalsProps {
 }
 
 export function AISignals({ onSelectCrypto }: AISignalsProps) {
-  const { signals, loading, refreshSignals } = useAISignals();
+  const { signals, loading, refreshSignals, nextUpdate } = useAISignals();
   const [filter, setFilter] = useState<'all' | 'long' | 'short' | 'neutral'>('all');
   const [timeframe, setTimeframe] = useState<'all' | '1h' | '4h' | '1d'>('all');
 
@@ -47,6 +47,14 @@ export function AISignals({ onSelectCrypto }: AISignalsProps) {
       default:
         return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
     }
+  };
+
+  const formatCountdown = (ms: number) => {
+    const totalSeconds = Math.max(Math.round(ms / 1000), 0);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   if (loading) {
@@ -123,6 +131,13 @@ export function AISignals({ onSelectCrypto }: AISignalsProps) {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2 rounded-2xl border border-gray-700 bg-slate-950/70 px-4 py-3 text-sm text-gray-300">
+          <Clock className="w-4 h-4 text-blue-300" />
+          <span>
+            Next update in <span className="font-semibold text-white">{formatCountdown(nextUpdate)}</span>
+          </span>
+        </div>
+
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-gray-400" />
           <span className="text-sm text-gray-400">Filter:</span>
