@@ -11,13 +11,14 @@ interface AISignalsProps {
 }
 
 export function AISignals({ onSelectCrypto }: AISignalsProps) {
-  const { signals, loading } = useAISignals();
+  const { signals, loading, refreshSignals } = useAISignals();
   const [filter, setFilter] = useState<'all' | 'long' | 'short' | 'neutral'>('all');
-  const [timeframe, setTimeframe] = useState('all');
+  const [timeframe, setTimeframe] = useState<'all' | '1h' | '4h' | '1d'>('all');
 
   const filteredSignals = signals.filter(signal => {
-    if (filter === 'all') return true;
-    return signal.recommendation.toLowerCase() === filter;
+    const matchesFilter = filter === 'all' || signal.recommendation.toLowerCase() === filter;
+    const matchesTimeframe = timeframe === 'all' || signal.timeframe.toLowerCase() === timeframe;
+    return matchesFilter && matchesTimeframe;
   });
 
   const getConfidenceColor = (confidence: number) => {
@@ -147,7 +148,7 @@ export function AISignals({ onSelectCrypto }: AISignalsProps) {
           </Tabs>
         </div>
 
-        <Button variant="outline" size="sm" className="border-gray-700 text-gray-300">
+        <Button variant="outline" size="sm" className="border-gray-700 text-gray-300" onClick={refreshSignals}>
           <RefreshCw className="w-4 h-4 mr-1" /> Refresh
         </Button>
       </div>

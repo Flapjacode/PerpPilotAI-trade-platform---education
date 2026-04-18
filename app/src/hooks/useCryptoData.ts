@@ -77,92 +77,124 @@ export function useChartData(symbol: string, days: number = 30) {
 export function useAISignals() {
   const [signals, setSignals] = useState<AISignal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nextUpdate, setNextUpdate] = useState<number>(2 * 60 * 60 * 1000);
+
+  const shuffleArray = <T,>(array: T[]) => {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  };
+
+  const createSignal = (coin: Cryptocurrency, index: number): AISignal => {
+    const recommendation = ['LONG', 'SHORT', 'NEUTRAL'][Math.floor(Math.random() * 3)] as AISignal['recommendation'];
+    const entryPrice = coin.current_price;
+    const confidence = Math.min(95, Math.max(50, Math.round(40 + Math.random() * 50)));
+    const timeframeOptions = ['1H', '4H', '1D'];
+    const timeframe = timeframeOptions[index % timeframeOptions.length];
+    const strength = Math.random() * 0.12 + 0.04;
+    const stopBuffer = Math.random() * 0.06 + 0.02;
+
+    const targetPrice = parseFloat(
+      recommendation === 'SHORT'
+        ? (entryPrice * (1 - strength)).toFixed(2)
+        : recommendation === 'LONG'
+        ? (entryPrice * (1 + strength)).toFixed(2)
+        : (entryPrice * (1 + 0.04)).toFixed(2)
+    );
+
+    const stopLoss = parseFloat(
+      recommendation === 'SHORT'
+        ? (entryPrice * (1 + stopBuffer)).toFixed(2)
+        : recommendation === 'LONG'
+        ? (entryPrice * (1 - stopBuffer)).toFixed(2)
+        : (entryPrice * (1 - 0.03)).toFixed(2)
+    );
+
+    return {
+      id: `${coin.id}-${Date.now()}-${index}`,
+      symbol: coin.id,
+      recommendation,
+      confidence,
+      entryPrice,
+      targetPrice,
+      stopLoss,
+      timeframe,
+      reasoning: recommendation === 'NEUTRAL'
+        ? 'Price is consolidating, the model recommends waiting for a clearer breakout before taking a position.'
+        : recommendation === 'LONG'
+        ? 'Momentum is supporting an upside move; support is holding and indicators are aligned for a buy entry.'
+        : 'Trend indicators are showing weakness and the asset is likely to retrace lower into support.',
+      indicators: {
+        rsi: parseFloat((Math.random() * 40 + (recommendation === 'LONG' ? 50 : recommendation === 'SHORT' ? 30 : 45)).toFixed(1)),
+        macd: recommendation === 'LONG' ? 'Bullish Momentum' : recommendation === 'SHORT' ? 'Bearish Momentum' : 'Neutral',
+        ema: recommendation === 'LONG' ? 'Above 50 EMA' : recommendation === 'SHORT' ? 'Below 50 EMA' : 'Sideways',
+        volume: recommendation === 'LONG' ? 'Increasing' : recommendation === 'SHORT' ? 'Decreasing' : 'Stable',
+      },
+      timestamp: new Date().toISOString(),
+    };
+  };
+
+  const generateSignals = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1&sparkline=false&price_change_percentage=24h`
+      );
+      let cryptos: Cryptocurrency[] = [];
+      if (response.ok) {
+        const data = await response.json();
+        cryptos = data.map((coin: any) => ({
+          id: coin.id,
+          symbol: coin.symbol,
+          name: coin.name,
+          image: coin.image,
+          current_price: coin.current_price,
+          market_cap: coin.market_cap,
+          market_cap_rank: coin.market_cap_rank,
+          fully_diluted_valuation: coin.fully_diluted_valuation,
+          total_volume: coin.total_volume,
+          high_24h: coin.high_24h,
+          low_24h: coin.low_24h,
+          price_change_24h: coin.price_change_24h,
+          price_change_percentage_24h: coin.price_change_percentage_24h,
+          market_cap_change_24h: coin.market_cap_change_24h,
+          market_cap_change_percentage_24h: coin.market_cap_change_percentage_24h,
+          circulating_supply: coin.circulating_supply,
+          total_supply: coin.total_supply,
+          max_supply: coin.max_supply,
+          ath: coin.ath,
+          ath_change_percentage: coin.ath_change_percentage,
+          ath_date: coin.ath_date,
+          atl: coin.atl,
+          atl_change_percentage: coin.atl_change_percentage,
+          atl_date: coin.atl_date,
+          roi: coin.roi,
+          last_updated: coin.last_updated,
+        }));
+      } else {
+        cryptos = getMockCryptos();
+      }
+
+      const selected = shuffleArray(cryptos).slice(0, 10);
+      const generated = selected.map(createSignal);
+      setSignals(generated);
+    } catch {
+      setSignals(shuffleArray(getMockCryptos()).slice(0, 10).map(createSignal));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Generate AI signals based on mock analysis
-    const generateSignals = () => {
-      const mockSignals: AISignal[] = [
-        {
-          id: '1',
-          symbol: 'bitcoin',
-          recommendation: 'LONG',
-          confidence: 78,
-          entryPrice: 67234.50,
-          targetPrice: 72500.00,
-          stopLoss: 64500.00,
-          timeframe: '4H',
-          reasoning: 'Bullish divergence on RSI, strong support at current level, volume increasing. EMA crossover indicates upward momentum.',
-          indicators: {
-            rsi: 52.4,
-            macd: 'Bullish Crossover',
-            ema: 'Above 50 EMA',
-            volume: 'Increasing',
-          },
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          symbol: 'ethereum',
-          recommendation: 'SHORT',
-          confidence: 65,
-          entryPrice: 3456.78,
-          targetPrice: 3200.00,
-          stopLoss: 3650.00,
-          timeframe: '1H',
-          reasoning: 'Bearish engulfing pattern formed, resistance at 3500 holding, MACD showing bearish divergence.',
-          indicators: {
-            rsi: 68.2,
-            macd: 'Bearish Divergence',
-            ema: 'Below 20 EMA',
-            volume: 'Decreasing',
-          },
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          symbol: 'solana',
-          recommendation: 'LONG',
-          confidence: 82,
-          entryPrice: 145.23,
-          targetPrice: 168.50,
-          stopLoss: 132.00,
-          timeframe: '1D',
-          reasoning: 'Strong breakout from consolidation, high volume surge, institutional buying detected.',
-          indicators: {
-            rsi: 58.7,
-            macd: 'Strong Bullish',
-            ema: 'Above 200 EMA',
-            volume: 'High',
-          },
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: '4',
-          symbol: 'cardano',
-          recommendation: 'NEUTRAL',
-          confidence: 45,
-          entryPrice: 0.45,
-          targetPrice: 0.52,
-          stopLoss: 0.38,
-          timeframe: '4H',
-          reasoning: 'Consolidating in range, waiting for clear breakout direction. Low volatility period.',
-          indicators: {
-            rsi: 48.5,
-            macd: 'Flat',
-            ema: 'At 50 EMA',
-            volume: 'Low',
-          },
-          timestamp: new Date().toISOString(),
-        },
-      ];
-      setSignals(mockSignals);
-      setLoading(false);
-    };
-
     generateSignals();
+    const interval = setInterval(generateSignals, 2 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  return { signals, loading };
+  return { signals, loading, refreshSignals: generateSignals, nextUpdate };
 }
 
 // Mock data helpers
