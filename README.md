@@ -1,4 +1,4 @@
-# ⚡ React + TypeScript + Vite
+#  React + TypeScript + Vite
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -8,7 +8,7 @@ A minimal, fast starter template for building React apps with TypeScript and Vit
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ```bash
 npm install
@@ -17,7 +17,7 @@ npm run dev
 
 ---
 
-## 🔌 Official Plugins
+##  Official Plugins
 
 Choose one of the two official Vite React plugins:
 
@@ -28,7 +28,7 @@ Choose one of the two official Vite React plugins:
 
 ---
 
-## 🧪 React Compiler
+##  React Compiler
 
 > **Note:** The React Compiler is **not enabled** in this template due to its impact on dev and build performance.
 
@@ -36,7 +36,7 @@ To opt in, follow the [React Compiler installation guide](https://react.dev/lear
 
 ---
 
-## 🛡️ ESLint Configuration
+##  ESLint Configuration
 
 ### Recommended: Type-Aware Lint Rules
 
@@ -96,6 +96,6 @@ export default defineConfig([
 
 ---
 
-## 📄 License
+##  License
 
 MIT
